@@ -23,29 +23,46 @@ from nltk.corpus import stopwords
 from torchtext import data
 from nltk.stem import WordNetLemmatizer
 import re
+from torchtext import data
 # import enchant
 
+''' 
+This function is used to search files with a pattern under a specific path to a maximum
+depth of maxdepth.
+'''
 def find(path, pattern, maxdepth):
     return [line.decode("utf-8") for line in subprocess.check_output("find " + path \
         + " . -maxdepth " + maxdepth + " -type f -iname " + pattern, shell=True).splitlines()]   
 
+'''
+This function is used to load a pickle object from a given path.
+'''
 def load_obj(file_path):
     file = open(file_path, "rb")   
     obj = pickle.load(file)
     file.close()
     return obj
 
+'''
+This function is used to save a pickle object to a given path.
+'''
 def save_obj(obj, file_path):
     file = open(file_path, "wb")   
     pickle.dump(obj, file)
     file.close()
 
+'''
+This function is used to load a read Json object from a given path.
+'''
 def read_json(file_path):
     file = open(file_path, 'r', encoding="utf-8")
     data = json.load(file)
     file.close()
     return data
 
+'''
+This function is used to read the content from a file path.
+'''
 def read_text(path):
     print(path)
     file = open(path, "r", encoding="utf-8")
@@ -60,6 +77,10 @@ def retrieve_cv_text(row, sys_id):
         return cv_txt
     return np.nan
 
+'''
+This function is used to convert an English interview state to
+an numerical interview state.
+'''
 def is_interviewed(state, company_id):
     """
     Return true if applicant got to interview stage.
@@ -123,26 +144,6 @@ def get_id_data_dict(search_path, sys_id, pattern, depth, field):
     pool.join()
     return data_dict
 
-def sample_job_titles(df):
-    title_ids_dict = collections.defaultdict(list)
-    start_time = time.time()
-    pool = Pool()
-    for index, row in df.iterrows():
-        job_title = row['job_title']
-        title_ids_dict[job_title].append(index)
-    
-    indexes = []
-    n = 35
-    for key, val in title_ids_dict.items():
-        for i in range(n):
-            index = val[random.randint(0, len(val)-1)]
-            indexes.append(index)
-    pool.close()
-    pool.join()
-    end_time = time.time()
-    print(end_time - start_time)    
-    return df.loc[indexes].sort_index().reset_index(drop=True)
-
 def get_csv_by_system(sys_id):
     paths = find('/home/vX/CV/' + sys_id, '*files_*', '2')[0]
     oppid_data_dict = get_id_data_dict('/home/vX/apps_opps/opp/', sys_id,
@@ -164,6 +165,9 @@ def get_csv_by_system(sys_id):
     df.to_csv("data/" + sys_id + "_CVs_outcome.csv", index=False)
     return df
 
+'''
+This function is used to encode a list of sentences using InferSent.
+'''
 def encode_sentences(sentences):
     MODEL_PATH =  'InferSent/encoder/infersent1.pkl'
     params_model = {'bsize': 64, 'word_emb_dim': 300, 'enc_lstm_dim': 2048,
@@ -177,6 +181,10 @@ def encode_sentences(sentences):
 #     print('nb sentences encoded : {0}'.format(len(embeddings)))
     return embeddings
 
+'''
+This function is used to compress job title embedding to a reduced dimension
+of 50.
+'''
 def compress_job_vec(job_vecs):
     pca = PCA(n_components=50)
     embeddings = pca.fit_transform(job_vecs)
@@ -197,6 +205,9 @@ def create_jobtitle_vec_dict(jobtitles):
         vec_dict[title] = list(vec)
     return vec_dict
 
+'''
+This function is used to normalize the job titles text.
+'''
 def normalize_jobtitle(row):
     job_title = row['job_title']
     lemmatizer = WordNetLemmatizer()
@@ -222,6 +233,10 @@ def normalize_jobtitle(row):
     row['job_title'] = " ".join(title_processed)
     return row
 
+'''
+During loading job title embedding, this function is used to convert raw string
+into their numerical values using ast.literal_eval.
+'''
 def label_field_preprocessing(x):
     x = literal_eval(x)
     return x
@@ -238,7 +253,10 @@ def label_field_postprocessing(batch):
     batch = torch.from_numpy(np.array(batch, dtype=np.float32))
     return batch
 
-from torchtext import data
+'''
+This function is used to load training, validation and test data into batches
+for the model training.
+'''
 def load_data(text_field, label_field, batch_size):
     start_time = time.time()
     data_fields = [("text", text_field), ("interview", label_field), ('job_title_vec', label_field)]
@@ -266,6 +284,9 @@ def load_data(text_field, label_field, batch_size):
     return train_iter, dev_iter, test_iter
 
 
+'''
+This function is used to preprocess CV text during loading data.
+'''
 def text_tokenize(text):
     stopword_list = stopwords.words('english') 
     punctuations = list(string.punctuation)
@@ -282,6 +303,10 @@ def text_tokenize(text):
                 tokens.append(word)
     return tokens
 
+'''
+This function is used to convert batches of word IDs vector
+back into their text representation.
+'''
 def batch_text_itos(batch_text, itos):
     res = []
     max_seq_len, batch_size = batch_text.size()
