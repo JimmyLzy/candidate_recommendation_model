@@ -15,4 +15,5 @@ Job_title_embedding_prediction_interview-mse-gpu.ipynb with one output layer to 
 TfidfDocVectorizer.py<br/>
 
 Due to data protection law, data used for this project can not be published here.<br/>
-In order to run the code, you should be able to run ipython notebook after feeding your own data into my system.<br/>
+
+In order to run the code, please firstly download Facebook InferSent code from https://github.com/facebookresearch/InferSent and follow instructions on that GitHub. Please also reset all data paths to your own one. you should be able to run ipython notebook after feeding your own data into my system.<br/>
